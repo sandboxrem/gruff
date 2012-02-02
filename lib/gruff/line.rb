@@ -25,7 +25,7 @@ class Gruff::Line < Gruff::Base
   attr_accessor :dot_radius
 
   # Hide parts of the graph to fit more datapoints, or for a different appearance.
-  attr_accessor :hide_dots, :hide_lines
+  attr_accessor :hide_dots, :hide_lines, :hide_values
 
   # Call with target pixel width of graph (800, 400, 300), and/or 'false' to omit lines (points only).
   #
@@ -45,6 +45,7 @@ class Gruff::Line < Gruff::Base
     end
 
     @hide_dots = @hide_lines = false
+    @hide_values = true
     @baseline_color = 'red'
     @baseline_value = nil
   end
@@ -68,7 +69,7 @@ class Gruff::Line < Gruff::Base
       @d = @d.pop
     end
 
-    @norm_data.each do |data_row|
+    @norm_data.each_with_index do |data_row, data_row_index|
       prev_x = prev_y = nil
 
       @one_point = contains_one_point_only?(data_row)
@@ -99,6 +100,11 @@ class Gruff::Line < Gruff::Base
           @d = @d.circle(new_x, new_y, new_x - circle_radius, new_y)
         end
         @d = @d.circle(new_x, new_y, new_x - circle_radius, new_y) unless @hide_dots
+        @d = @d.annotate_scaled(@base_image,
+                                1, 1,
+                                new_x, new_y + 2*circle_radius, #prevent overlap between dot and value 
+                                @data[data_row_index][DATA_VALUES_INDEX][index].to_s,
+                                @scale) unless @hide_values
 
         prev_x = new_x
         prev_y = new_y
