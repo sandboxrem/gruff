@@ -1092,7 +1092,7 @@ module Gruff
     # handle.
     def calculate_caps_height(font_size)
       @d.pointsize = font_size
-      @d.font = @font
+      #@d.font = @font
       @d.get_type_metrics(@base_image, 'X').height
     end
 
@@ -1102,7 +1102,7 @@ module Gruff
     # scaling will handle.
     def calculate_width(font_size, text)
       @d.pointsize = font_size
-      @d.font = font
+      #@d.font = font
       @d.get_type_metrics(@base_image, text.to_s).width
     end
 
