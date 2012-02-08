@@ -145,15 +145,10 @@ module Gruff
 
     # You can manually set a minimum value instead of having the values
     # guessed for you.
-    #
-    # Set it after you have given all your data to the graph object.
     attr_accessor :minimum_value
 
     # You can manually set a maximum value, such as a percentage-based graph
     # that always goes to 100.
-    #
-    # If you use this, you must set it after you have given all your data to
-    # the graph object.
     attr_accessor :maximum_value
 
     # Set to false if you don't want the data to be sorted with largest avg
@@ -456,6 +451,8 @@ module Gruff
     # Example:
     #   data("Bart S.", [95, 45, 78, 89, 88, 76], '#ffcc00')
     def data(name, data_points=[], color=nil)
+      maximum_is_set = false
+      minimum_is_set = false
       data_points = Array(data_points) # make sure it's an array
       @data << [name, data_points, (color || increment_color)]
       # Set column count if this is larger than previous counts
@@ -468,18 +465,22 @@ module Gruff
         # Setup max/min so spread starts at the low end of the data points
         if @maximum_value.nil?
           @maximum_value = data_point
+        elsif index == 0
+          maximum_is_set = true
         end
 
         if @minimum_value.nil?
           @minimum_value = data_point
+          elsif index == 0
+          minimum_is_set = true
         end
 
         # TODO Doesn't work with stacked bar graphs
         # Original: @maximum_value = larger_than_max?(data_point, index) ? max(data_point, index) : @maximum_value
-        @maximum_value = larger_than_max?(data_point) ? data_point : @maximum_value
+        @maximum_value = larger_than_max?(data_point) ? data_point : @maximum_value unless maximum_is_set
         @has_data = true if @maximum_value >= 0
 
-        @minimum_value = less_than_min?(data_point) ? data_point : @minimum_value
+        @minimum_value = less_than_min?(data_point) ? data_point : @minimum_value unless minimum_is_set
         @has_data = true if @minimum_value < 0
       end
     end
