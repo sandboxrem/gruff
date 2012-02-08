@@ -185,20 +185,50 @@ class TestGruffLine < GruffTestCase
   end
 
 
-  def test_similar_high_end_values
-    @dataset = %w(29.43 29.459 29.498 29.53 29.548 29.589 29.619 29.66 29.689 29.849 29.878 29.74 29.769 29.79 29.808 29.828).collect {|i| i.to_f}
+  def test_set_minimum
+    @dataset = %w(-2 -1 0 1 2).collect {|i| i.to_f}
 
     g = Gruff::Line.new
-    g.title = "Similar High End Values Test"
-    g.data('similar points', @dataset )
-    g.write("test/output/line_similar_high_end_values.png")
+    g.title = "dont set minimum to -1 "
+    g.data('values from -2 to 2', @dataset )
+    g.write("test/output/line_dont_set_minimum.png")
 
     g = Gruff::Line.new
-    g.title = "Similar High End Values With Floor"
-    g.data('similar points', @dataset )
-    g.minimum_value = 0
-    g.y_axis_label = "Barometric Pressure"
-    g.write("test/output/line_similar_high_end_values_with_floor.png")
+    g.title = "Set minimum to -1"
+    g.data('values from -2 to 2', @dataset )
+    g.minimum_value = -1
+    g.y_axis_label = "y axis label"
+    g.write("test/output/line_set_minimum.png")
+
+    g = Gruff::Line.new
+    g.title = "Set minimum to -1 before data"
+    g.minimum_value = -1
+    g.data('values from -2 to 2', @dataset )
+    g.y_axis_label = "y axis label"
+    g.write("test/output/line_set_minimum_before_data.png")
+  end
+
+  def test_set_maximum
+    @dataset = %w(-2 -1 0 1 2).collect {|i| i.to_f}
+
+    g = Gruff::Line.new
+    g.title = "dont set maximum to 1 "
+    g.data('values from -2 to 2', @dataset )
+    g.write("test/output/line_dont_set_maximum.png")
+
+    g = Gruff::Line.new
+    g.title = "Set maximum to 1"
+    g.data('values from -2 to 2', @dataset )
+    g.maximum_value = 1
+    g.y_axis_label = "y axis label"
+    g.write("test/output/line_set_maximum.png")
+
+    g = Gruff::Line.new
+    g.title = "Set maximum to 1 before data"
+    g.maximum_value = 1
+    g.data('values from -2 to 2', @dataset )
+    g.y_axis_label = "y axis label"
+    g.write("test/output/line_set_maximum_before_data.png")
   end
 
   def test_many_lines_graph_small
@@ -335,6 +365,13 @@ class TestGruffLine < GruffTestCase
     g.title = "Hide Lines"
     g.hide_lines = true
     g.write("test/output/line_hide_lines.png")
+  end
+
+  def test_show_values
+    g = setup_basic_graph(400)
+    g.title = "Show Values"
+    g.hide_values = false
+    g.write("test/output/line_show_values.png")
   end
 
   def test_wide_graph
