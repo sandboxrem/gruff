@@ -25,7 +25,7 @@ class Gruff::Line < Gruff::Base
   attr_accessor :dot_radius
 
   # Hide parts of the graph to fit more datapoints, or for a different appearance.
-  attr_accessor :hide_dots, :hide_lines, :hide_values
+  attr_accessor :hide_dots, :hide_lines, :hide_values, :hide_exeeding
 
   # Call with target pixel width of graph (800, 400, 300), and/or 'false' to omit lines (points only).
   #
@@ -44,14 +44,15 @@ class Gruff::Line < Gruff::Base
       super args.shift
     end
 
-    @hide_dots = @hide_lines = false
+    @hide_dots = @hide_lines = @hide_exeeding = false
     @hide_values = true
     @baseline_color = 'red'
     @baseline_value = nil
   end
 
   def interpolate_x(xa, ya, xb, yb, y)
-    return xa+((xb-xa)*(y-ya)/(yb-ya))
+    return xa+((xb-xa)*(y-ya)/(yb-ya)) unless (yb-ya)==0
+    return 0
   end
 
   def draw
@@ -81,8 +82,33 @@ class Gruff::Line < Gruff::Base
       data_row[DATA_VALUES_INDEX].each_with_index do |data_point, index|
         next if data_point.nil?
 
-        new_x = @graph_left + (@x_increment * index)
-        new_y = @graph_top + (@graph_height - data_point * @graph_height)
+        raw_y = @data[data_row_index][DATA_VALUES_INDEX][index]
+        tmp_y = nil
+        y_exeeded = (maximum_value < raw_y || raw_y < minimum_value) && @hide_exeeding
+        print " raw y " + raw_y.to_s + " max " + maximum_value.to_s + " min " + minimum_value.to_s +  " exeeds = " + y_exeeded.to_s +  "\n"
+
+        
+        real_x = new_x = @graph_left + (@x_increment * index)
+        real_y = new_y = @graph_top + (@graph_height - data_point * @graph_height)
+        ann_y = new_y + 10
+        
+        if y_exeeded then # adjust new x and y if y is over limits
+          if raw_y > maximum_value then
+            tmp_y = @graph_top
+            ann_y = tmp_y - 10
+          else
+            tmp_y = @graph_top + @graph_height
+            ann_y = tmp_y - 100
+          end
+          print " new x= " + new_x.to_s  + " new_y = " + new_y.to_s + " prev x = " + prev_x.to_s + " prev y = " + prev_y.to_s + "\n"
+          if prev_x.nil? or prev_y.nil? then # first datapoint
+            new_x = interpolate_x(@graph_left, tmp_y, new_x, new_y, tmp_y)
+          else # normal case
+            new_x = interpolate_x(prev_x, prev_y, new_x, new_y, tmp_y)
+          end
+          new_y = tmp_y
+        end
+        
 
         draw_label(new_x, index)
 
@@ -103,15 +129,31 @@ class Gruff::Line < Gruff::Base
           # Show a circle if there's just one_point
           @d = @d.circle(new_x, new_y, new_x - circle_radius, new_y)
         end
-        @d = @d.circle(new_x, new_y, new_x - circle_radius, new_y) unless @hide_dots
+        @d = @d.circle(new_x, new_y, new_x - circle_radius, new_y) unless @hide_dots or y_exeeded
         @d = @d.annotate_scaled(@base_image,
                                 1, 1,
-                                new_x, new_y + 2*circle_radius, #prevent overlap between dot and value 
+                                real_x, ann_y + 2*circle_radius, #prevent overlap between dot and value 
                                 @data[data_row_index][DATA_VALUES_INDEX][index].to_s,
                                 @scale) unless @hide_values
 
-        prev_x = new_x
-        prev_y = new_y
+        
+        if index < data_row.size then
+          print "yli on indexi\n"
+        end
+        
+        if y_exeeded and index+1 < data_row[DATA_VALUES_INDEX].size then
+          next_x = @graph_left + (@x_increment * index+1)
+          next_y = data_row[DATA_VALUES_INDEX][index+1]
+          #real_x = @graph_left + (@x_increment * index)
+          #real_y = @graph_top + (@graph_height - data_point * @graph_height)
+          print "XX new x= " + new_x.to_s  + " new_y = " + new_y.to_s + " next x = " + next_x.to_s + " next y = " + next_y.to_s + "\n"
+          prev_x = interpolate_x(real_x, real_y, next_x, next_y, new_y)
+          prev_y = new_y
+        else
+          prev_x = new_x
+          prev_y = new_y
+        end
+        
       end
 
     end
