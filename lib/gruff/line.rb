@@ -50,6 +50,10 @@ class Gruff::Line < Gruff::Base
     @baseline_value = nil
   end
 
+  def interpolate_x(xa, ya, xb, yb, y)
+    return xa+((xb-xa)*(y-ya)/(yb-ya))
+  end
+
   def draw
     super
 
