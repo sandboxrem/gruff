@@ -79,12 +79,12 @@ class Gruff::Line < Gruff::Base
       @one_point = contains_one_point_only?(data_row)
 
       data_row[DATA_VALUES_INDEX].each_with_index do |data_point, index|
-        new_x = @graph_left + (@x_increment * index)
         next if data_point.nil?
 
-        draw_label(new_x, index)
-
+        new_x = @graph_left + (@x_increment * index)
         new_y = @graph_top + (@graph_height - data_point * @graph_height)
+
+        draw_label(new_x, index)
 
         # Reset each time to avoid thin-line errors
         @d = @d.stroke data_row[DATA_COLOR_INDEX]
