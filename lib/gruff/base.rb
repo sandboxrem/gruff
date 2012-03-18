@@ -167,6 +167,11 @@ module Gruff
     # Will be scaled down if graph is smaller than 800px wide.
     attr_accessor :legend_box_size
 
+    # Socbet_specific
+    # y_axis can be set in decrement direction (from maximum to minimum)
+    # default: false
+    attr_accessor :reverse_direction
+
     # If one numerical argument is given, the graph is drawn at 4/3 ratio
     # according to the given width (800 results in 800x600, 400 gives 400x300,
     # etc.).
@@ -558,7 +563,11 @@ module Gruff
             if data_point.nil?
               norm_data_points << nil
             else
-              norm_data_points << ((data_point.to_f - @minimum_value.to_f ) / @spread)
+              if @reverse_direction
+                norm_data_points << ((@maximum_value + 1 - data_point.to_f - @minimum_value.to_f ) / @spread)
+              else # default
+                norm_data_points << ((data_point.to_f - @minimum_value.to_f ) / @spread)
+              end
             end
           end
           @norm_data << [data_row[DATA_LABEL_INDEX], norm_data_points, data_row[DATA_COLOR_INDEX]]
@@ -702,10 +711,14 @@ module Gruff
         y = @graph_top + @graph_height - index.to_f * @increment_scaled
 
         @d = @d.fill(@marker_color)
-        @d = @d.line(@graph_left, y, @graph_right, y)
-
-        marker_label = BigDecimal(index.to_s) * BigDecimal(@increment.to_s) +
+        @d = @d.line(@graph_left, y, @graph_right, y) 
+        if @reverse_direction
+          marker_label = (@maximum_value - 1 - BigDecimal(index.to_s)) * BigDecimal(@increment.to_s) +
                        BigDecimal(@minimum_value.to_s)
+        else # default
+          marker_label = BigDecimal(index.to_s) * BigDecimal(@increment.to_s) +
+                       BigDecimal(@minimum_value.to_s)
+        end
 
         unless @hide_line_numbers
           @d.fill = @font_color
